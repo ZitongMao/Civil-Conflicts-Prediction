@@ -1,11 +1,13 @@
 library(plyr)
-library(randomForest)
+library(ROCR)
 
-# data contains parameters related to how physicians react to different types of marketing techniques (ie digital, email, phone call, etc). 
+# loading data
 load("~/CS112 Final/WGB Replication Files/Data/fl.three.RData")
 data_test <- fl.three
+
 set.seed(1)
-# predict the dependent variable values from the other variables in the data_testset
+
+# k-fold cross validation method
 
 k = 5 # Folds
 
@@ -19,49 +21,31 @@ prediction.f <- data.frame()
 prediction <- data.frame()
 testsetCopy <- data.frame()
 
-#Creating a progress bar to know the status of CV
+# creating a progress bar to visualize the CV process
 progress.bar <- create_progress_bar("text")
 progress.bar$init(k)
 
-
+# loop for k times
 for (i in 1:k) {
   # remove rows with id i from data_testframe to create training set
   # select rows with id i to create test set
   trainingset <- subset(data_test, id %in% list[-i]) #[-i] means except i
   testset <- subset(data_test, id %in% list[i])
-  
-  # run a random forest model
-  
-  
-  #  flmodel.forest2 <- randomForest(as.factor(onset) ~ warl + gdpenl + 
-  #                                     lpopl1 + lmtnest + ncontig + 
-  #                                    Oil + nwstate + instab + polity2l
-  #                                  + ethfrac + relfrac, data = trainingset, mtry = 11, importance = TRUE)
-  
-#  flmodel.forest <- randomForest(onset ~ warl + gdpenl + 
-#                                   lpopl1 + lmtnest + ncontig + 
-#                                   Oil + nwstate + instab + polity2l
-#                                 + ethfrac + relfrac, data = trainingset, importance = TRUE)
-  
+ 
+  # run the logistic regression model using training set
   flmodel <- glm(as.factor(onset) ~ 
                     warl + gdpenl + lpopl1 + lmtnest + ncontig + 
                     Oil + nwstate + instab + polity2l
                    + ethfrac + relfrac, family = binomial(link = logit),
                    data = trainingset)
   
-#  temp <- as.data.frame(predict(flmodel.forest, testset))
-#  temp.f <- ifelse(temp > 0.3, 1, 0)
-  
-  #  temp <- as.data.frame(predict(flmodel.forest2, testset))
-  
-    temp <- as.data.frame(predict.glm(flmodel, testset, type="response"))
-    temp.f <- ifelse(temp > 0.3, 1, 0)
-  
+  # getting predicted results
+  temp <- as.data.frame(predict.glm(flmodel, testset, type="response"))
+  temp.f <- ifelse(temp > 0.3, 1, 0) # threshold
   
   # append this iteration's predictions to the end of the prediction data_test frame
   prediction <- rbind(prediction, temp)
   prediction.f <- rbind(prediction.f, temp.f)
-  
   
   # append this iteration's test set to the test set copy data frame
   testsetCopy <- rbind(testsetCopy, as.data.frame(testset))
@@ -74,15 +58,20 @@ result <- cbind(prediction.f, testsetCopy$onset)
 names(result) <- c("Predicted", "Actual")
 result$Difference <- result$Actual == result$Predicted
 
-# As an example use % correct classification 
+# use % correct classification 
 table(result$Difference)
 # % Accuracy
 sum(result$Difference)/length(result$Difference)
 
+# create ROC Plot
 pred<- prediction(prediction, testsetCopy$onset)
 perf<- performance(pred,"tpr","fpr")
+plot(perf, main="ROC Plot: Logistic Regression Model (Cross-validated)", lwd=3)
 
-plot(perf, main="ROC Plot: Fearon & Laitin Model (Cross-validated)", lwd=3)
+# calculate the Area Under Curve (AUC)
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
 
-#varImpPlot (flmodel.forest)
+text(0.2,0.4,"Total Area Under Curve: 0.741",adj=c(0,1))
 

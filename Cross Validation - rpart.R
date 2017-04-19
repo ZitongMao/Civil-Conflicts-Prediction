@@ -1,5 +1,5 @@
-library(plyr)
-library(randomForest)
+library(rpart)
+library(rpart.plot)
 library(ROCR)
 
 # loading data
@@ -33,16 +33,18 @@ for (i in 1:k) {
   trainingset <- subset(data_test, id %in% list[-i]) #[-i] means except i
   testset <- subset(data_test, id %in% list[i])
   
-  # run the random forest model
-  flmodel.forest <- randomForest(onset ~ warl + gdpenl + 
-                                   lpopl1 + lmtnest + ncontig + 
-                                   Oil + nwstate + instab + polity2l
-                                 + ethfrac + relfrac, data = trainingset, importance = TRUE)
+  # run the Recursive Partitioning and Regression Trees (rpart) model using training set
+  flmodel.rpart <- rpart(as.factor(onset) ~ 
+                   warl + gdpenl + lpopl1 + lmtnest + ncontig + 
+                   Oil + nwstate + instab + polity2l
+                 + ethfrac + relfrac, data = trainingset, 
+                 control=rpart.control(minsplit=6, minbucket=2, cp=0.003)) #loosing the control for better predictive power
+  
+  ### rpart.plot(flmodel.rpart)
   
   # getting predicted results
-  temp <- as.data.frame(predict(flmodel.forest, testset))
-  temp.f <- ifelse(temp > 0.3, 1, 0) # threshold
-  
+  temp <- as.data.frame(predict.glm(flmodel, testset, type="response"))
+  temp.f <- ifelse(temp > 0.3, 1, 0) #threshold
   # append this iteration's predictions to the end of the prediction data_test frame
   prediction <- rbind(prediction, temp)
   prediction.f <- rbind(prediction.f, temp.f)
@@ -66,15 +68,12 @@ sum(result$Difference)/length(result$Difference)
 # create ROC Plot
 pred<- prediction(prediction, testsetCopy$onset)
 perf<- performance(pred,"tpr","fpr")
-plot(perf, main="ROC Plot: Random Forest Model (Cross-validated)", lwd=3)
+plot(perf, main="ROC Plot: RPART Model (Cross-validated)", lwd=3)
 
 # calculate the Area Under Curve (AUC)
 auc <- performance(pred, measure = "auc")
 auc <- auc@y.values[[1]]
 auc
 
-text(0.3,0.4,"Total Area Under Curve: 0.673",adj=c(0,1))
-
-#show importance of variables in the random forest
-varImpPlot (flmodel.forest)
+text(0.2,0.4,"Total Area Under Curve: 0.756",adj=c(0,1))
 
