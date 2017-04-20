@@ -39,11 +39,11 @@
 \maketitle
 
 \section{Abstract}
-Civil wars are increasingly prevalent and lethal, providing an important threat to human security. Various studies have been done to research the relationship between social factors and the onsets of civil conflicts. However, as pointed out by Ward et al. (2010), "too little attention has been paid to finding variables that improve our ability to predict civil wars". Achieving statistically significant results does not necessarily increase the predictive power of existing models. In this paper, I will start with a replication of Ward et al.'s findings. Then, focusing on Ward et al.'s problem of using the original data set as both the training and test set, I will implement a k-fold Cross Validation to predict out-of-sample results. Finally, I will construct a Recursive Partitioning and Regression Trees (RPART) model and a Random Forest model to increase the predictive power of the models without changing the in dependant variables. I will end the paper with discussions as a decision memo for current researchers.
+Civil wars are increasingly prevalent and lethal, providing an important threat to human security. Various studies have been done to research the relationship between social factors and the onsets of civil conflicts. However, as pointed out by Ward et al. (2010), "too little attention has been paid to finding variables that improve our ability to predict civil wars." Achieving statistically significant results does not necessarily increase the predictive power of existing models. In this paper, I will start with a replication of Ward et al.'s findings. Then, focusing on Ward et al.'s problem of using the original data set as both the training and test set, I will implement a k-fold Cross Validation to predict out-of-sample results. Finally, I will construct a Recursive Partitioning and Regression Trees (RPART) model and a Random Forest model to increase the predictive power of the models without changing the independent variables. I will end the paper with discussions as a decision memo for current researchers.
 
 \section{Replication: Ward et al., 2010}
 
-Ward et al. used Fearon \& Laitin's (2003) data and model to investigate the relative importance of different predictors on the onsets of civil wars. Table \ref{variable} shows the variables used in FL's model.
+Ward et al. used Fearon \& Laitin's (2003) data and model to investigate the relative importance of different predictors on the onsets of civil wars. Table \ref{variable} shows the variables used in FL's model\footnote{\#replication}.
 
 \begin{table}[h!]
 \centering
@@ -90,17 +90,17 @@ I agree with Ward et al.'s conclusion that current models lack the predictive po
 
 \section{Problems}
 
-As we can see in Listing 1, Ward et al. constructed the regression model based on the original data-set with no specification of training set or test set. As a result, the ROC Plot only reflects the in-sample predictions. This is a huge problem. Since the topic of this research is "predicting civil conflicts", models with no specifications of training set and test set are not useful at all. Only the \textbf{out-of-sample} results could show us the actual predictive power of the models. Civil wars happening in the future would not be in your old data-set yet. If the models have succeeded in capturing the underlying relationship between the independent and dependent variables, they should still be able to predict events that they have not seen in the training set before.
+As we can see in Listing 1, Ward et al. constructed the regression model based on the original dataset with no specification of the training set or the test set. As a result, the ROC Plot only reflects the in-sample predictions. This is a huge problem. Since the topic of this research is "predicting civil conflicts," models with no specifications of training set and test set are not useful at all. Only the \textbf{out-of-sample} results could show us the actual predictive power of the models. Civil wars happening in the future would not be in your old dataset yet. If the models have succeeded in capturing the underlying relationship between the independent and dependent variables, they should still be able to predict events that they have not seen in the training set before.\footnote{\#sampling}\footnote{\#plausibility}
 
-Another problem is that, Ward et al. only used the logistic regression model to predict civil wars. Logistic regression models, especially getting trained only by the full data-set, can suffer from the problem of over-fitting. Their ability to make correct predictions in a new dataset will turn out to be much poorer.
+Another problem is that Ward et al. only used the logistic regression model for predicting civil wars. Logistic regression models, especially getting trained only by the full dataset, can suffer from the problem of over-fitting. Their ability to make correct predictions in a new dataset will turn out to be much poorer.\footnote{\#critique}
 
-The main difficulty for conducting out-of-sample research on civil conflicts is that, the number of civil wars is limited. There is not any civil conflict that has not been examined before. Therefore, it is extremely difficult to find new data to test existing models.
+The main difficulty for conducting out-of-sample research on civil conflicts is that the number of civil wars is limited. There is not any civil conflict that has not been examined before. Therefore, it is extremely difficult to find new data to test existing models.
 
-One possible solution is to perform a \textbf{Cross Validation} to separate existing data set into two parts, training set and test set. After the Cross Validation, the models will be trained only with training set, and their performances will be tested with test set. This allows us to get an overall estimation of the out-of-sample predictive power of a given model without having to find new data.
+One possible solution is to perform a \textbf{Cross Validation} to separate existing data set into two parts, training set and test set. After the Cross Validation, the models will be trained only with training set, and their performances will be tested with test set. This allows us to get an overall estimation of the out-of-sample predictive power of a given model without having to find new data.\footnote{\#constraints}
 
 \section{k-fold Cross Validation}
 
-Although various packages in R have built-in Cross Validation functions, I still wrote my original version of k-fold Cross Validation in order to compare the performances of multiple models at the same time with the same Cross Validation Method. Please see the \textit{Appendix} for the full code. It is highly readable, and the k can be easily changed to any other numbers.
+Although various packages in R have built-in Cross Validation functions, I still wrote my original version of k-fold Cross Validation in order to compare the performances of multiple models at the same time with the same Cross Validation Method. Please see the \textit{Appendix} for the full code. It is highly readable, and the k can be easily changed to any other numbers\footnote{\#presentation}.
 
 \begin{lstlisting}[language=R, caption=Logistic Regression Model (Cross-Validated)]
 # k-fold cross validation method
@@ -164,7 +164,7 @@ The performance of the original Logistic Regression Model dropped from 0.761 to 
 
 
 \section{RPART - Recursive Partitioning and Regression Trees}
-I implemented a RPART model (Listing 3) to solve the potential overfitting issues of the regression model to increase the predictive power. 
+I implemented a RPART model (Listing 3) to solve the potential overfitting issues of the regression model to increase the predictive power.\footnote{\#decisiontrees}
 
 \begin{lstlisting}[language=R, caption=RPART Model (Cross-Validated)]
 flmodel.rpart <- rpart(as.factor(onset) ~ 
@@ -174,7 +174,7 @@ flmodel.rpart <- rpart(as.factor(onset) ~
                        control=rpart.control(minsplit=6, minbucket=2, cp=0.003)) #loosing the control for better predictive power
 \end{lstlisting}
 
-The performance increased from 0.741 to 0.756. See Figure \ref{rocrpart} for the ROC Plot and Figure \ref{rpart} for a plot of this method.
+The performance increased from 0.741 to 0.756.\footnote{\#prediction} See Figure \ref{rocrpart} for the ROC Plot and Figure \ref{rpart} for a plot of this method.
 
 \begin{figure}[h!]
     \centering
@@ -232,13 +232,13 @@ Random Forest (Cross Validated)       & 0.673                               & 97
 \end{tabular}
 \end{table}
 
-As we can see in Table 2, although the original model has the highest predictive power, it has no use in predicting out-of-sample data. RPART Model successfully increases the Logistic Regression Model, while Random Forest performs worse.
+As we can see in Table 2, although the original model has the highest predictive power, it has no use in predicting out-of-sample data. RPART Model successfully improves the Logistic Regression Model, while Random Forest performs worse.\footnote{\#probability}
 
 One possible explanation is that, Fearon \& Laitin picked the predictors really well that the data points themselves were closer to a linear model. Therefore, the regression models including regression trees performed better than the random forest.  
 \section{Discussions}
 For current researchers researching on predictive models for various conflicts, Ward et al.'s conclusion still stands. Current models lack the predictive power and finding statistically significant predictors should not be the only focus. However, to add onto this point, researchers should never construct and analyze their models based on in-sample data. While acquiring new data is difficult, Cross Validation technics should always be performed to enable the models to have out-of-sample predictive powers. Out-of-sample heuristics including predictions should be the normal approach of all the research on conflicts.
 
-For researchers who are working on discovering new predictors in civil conflicts, keep in mind that these technics are only for \textit{predictive} inferences, not \textit{causal} relationships. In other words, such models could only predict the chance of civil conflicts happening. It does not tell us these social factors (dependant variables) \textit{cause} civil conflicts. 
+For researchers who are working on discovering new predictors in civil conflicts, keep in mind that these technics are only for \textit{predictive} inferences, not \textit{causal} relationships. In other words, such models could only predict the chance of civil conflicts happening. It does not tell us these social factors (dependent variables) \textit{cause} civil conflicts. 
 
 To really prevent a civil war from happening, researchers should focus on studying the causal relationship between different social factors and civil conflicts. Further research is needed before we could confidently say statements like "the low economic situation of this country is the main cause of its numerous civil conflicts."
 
@@ -247,7 +247,7 @@ Fearon, J. D., \& Laitin, D. D. (2003). Ethnicity, insurgency, and civil war. \t
 Ward, M. D., Greenhill, B. D., \& Bakke, K. M. (2010). The perils of policy by p-value: Predicting civil\\ \indent conflicts. \textit{Journal of Peace Research}, 47(4), 363-375. Chicago	
 
 \section{Appendix}
-Source code and \LaTeX\ documents: https://github.com/ZitongMao/CS112-Final
+Source code and \LaTeX\ documents available at: https://github.com/ZitongMao/CS112-Final
 
 \begin{lstlisting}[language=R, caption=k-fold Cross Validation: Random Forest as an example]
 library(plyr)
